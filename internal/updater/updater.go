@@ -4,6 +4,7 @@ package updater
 import (
 	"archive/tar"
 	"archive/zip"
+	"bytes"
 	"compress/gzip"
 	"context"
 	"fmt"
@@ -13,7 +14,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
@@ -26,6 +26,7 @@ import (
 	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/netutil/urlutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 )
 
 // Updater is the AdGuard Home updater.
@@ -286,11 +287,26 @@ func (u *Updater) check(ctx context.Context) (err error) {
 		"%s" +
 		"end of the output"
 
-	cmd := exec.Command(u.updateExeName, "--check-config")
-	out, err := cmd.CombinedOutput()
-	code := cmd.ProcessState.ExitCode()
-	if err != nil || code != 0 {
-		return fmt.Errorf(format, err, code, out)
+	var (
+		args   = []string{"--check-config"}
+		stdout bytes.Buffer
+		stderr bytes.Buffer
+	)
+
+	err = executil.Run(
+		ctx,
+		executil.SystemCommandConstructor{},
+		&executil.CommandConfig{
+			Path:   u.updateExeName,
+			Args:   args,
+			Stdout: &stdout,
+			Stderr: &stderr,
+		},
+	)
+	if err != nil {
+		code, _ := executil.ExitCodeFromError(err)
+
+		return fmt.Errorf(format, err, code, append(stdout.Bytes(), stderr.Bytes()...))
 	}
 
 	return nil

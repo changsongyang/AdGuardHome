@@ -5,13 +5,13 @@ package aghos
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"io/fs"
 	"log/slog"
 	"os"
-	"os/exec"
 	"path"
 	"runtime"
 	"slices"
@@ -19,6 +19,8 @@ import (
 	"strings"
 
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/osutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 )
 
 // Default file, binary, and directory permissions.
@@ -51,20 +53,40 @@ const MaxCmdOutputSize = 64 * 1024
 
 // RunCommand runs shell command.
 func RunCommand(command string, arguments ...string) (code int, output []byte, err error) {
-	cmd := exec.Command(command, arguments...)
-	out, err := cmd.Output()
+	// TODO(s.chzhen):  Pass context.
+	ctx := context.TODO()
 
-	out = out[:min(len(out), MaxCmdOutputSize)]
+	stdoutBuf := bytes.Buffer{}
+	stderrBuf := bytes.Buffer{}
 
-	if err != nil {
-		if eerr := new(exec.ExitError); errors.As(err, &eerr) {
-			return eerr.ExitCode(), eerr.Stderr, nil
-		}
+	err = executil.Run(
+		ctx,
+		executil.SystemCommandConstructor{},
+		&executil.CommandConfig{
+			Path:   command,
+			Args:   arguments,
+			Stdout: &stdoutBuf,
+			Stderr: &stderrBuf,
+		},
+	)
 
-		return 1, nil, fmt.Errorf("command %q failed: %w: %s", command, err, out)
+	out := stdoutBuf.Bytes()
+	if len(out) > MaxCmdOutputSize {
+		out = out[:MaxCmdOutputSize]
 	}
 
-	return cmd.ProcessState.ExitCode(), out, nil
+	code, ok := executil.ExitCodeFromError(err)
+	if err != nil {
+		if ok {
+			return code, stderrBuf.Bytes(), nil
+		}
+
+		return osutil.ExitCodeFailure,
+			nil,
+			fmt.Errorf("command %q failed: %w: %s", command, err, out)
+	}
+
+	return code, out, nil
 }
 
 // PIDByCommand searches for process named command and returns its PID ignoring
@@ -76,29 +98,34 @@ func PIDByCommand(
 	command string,
 	except ...int,
 ) (pid int, err error) {
+	const psCmd = "ps"
+
+	psArgs := []string{"-A", "-o", "pid=", "-o", "comm="}
+
 	// Don't use -C flag here since it's a feature of linux's ps
 	// implementation.  Use POSIX-compatible flags instead.
 	//
 	// See https://github.com/AdguardTeam/AdGuardHome/issues/3457.
-	cmd := exec.Command("ps", "-A", "-o", "pid=", "-o", "comm=")
-
-	var stdout io.ReadCloser
-	if stdout, err = cmd.StdoutPipe(); err != nil {
-		return 0, fmt.Errorf("getting the command's stdout pipe: %w", err)
+	stdoutBuf := bytes.Buffer{}
+	err = executil.Run(
+		ctx,
+		executil.SystemCommandConstructor{},
+		&executil.CommandConfig{
+			Path:   psCmd,
+			Args:   psArgs,
+			Stdout: &stdoutBuf,
+		},
+	)
+	if err != nil {
+		return 0, fmt.Errorf("executing the command: %w", err)
 	}
 
-	if err = cmd.Start(); err != nil {
-		return 0, fmt.Errorf("start command executing: %w", err)
-	}
+	reader := bytes.NewReader(stdoutBuf.Bytes())
 
 	var instNum int
-	pid, instNum, err = parsePSOutput(stdout, command, except)
+	pid, instNum, err = parsePSOutput(reader, command, except)
 	if err != nil {
 		return 0, err
-	}
-
-	if err = cmd.Wait(); err != nil {
-		return 0, fmt.Errorf("executing the command: %w", err)
 	}
 
 	switch instNum {
@@ -109,10 +136,6 @@ func PIDByCommand(
 		// Go on.
 	default:
 		l.WarnContext(ctx, "instances found", "num", instNum, "command", command)
-	}
-
-	if code := cmd.ProcessState.ExitCode(); code != 0 {
-		return 0, fmt.Errorf("ps finished with code %d", code)
 	}
 
 	return pid, nil

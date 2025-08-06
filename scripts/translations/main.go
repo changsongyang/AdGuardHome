@@ -13,7 +13,6 @@ import (
 	"maps"
 	"net/url"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -461,19 +460,16 @@ func handleDels(locales []string) (err error) {
 func changedLocales() (adds, dels []string, err error) {
 	defer func() { err = errors.Annotate(err, "getting changes: %w") }()
 
-	cmd := exec.Command("git", "diff", "--numstat", localesDir)
+	const gitCmd = "git"
 
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, nil, fmt.Errorf("piping: %w", err)
+	gitArgs := []string{"diff", "--numstat", localesDir}
+
+	code, out, err := aghos.RunCommand(gitCmd, gitArgs...)
+	if err != nil || code != 0 {
+		return nil, nil, fmt.Errorf("executing cmd: %w", err)
 	}
 
-	err = cmd.Start()
-	if err != nil {
-		return nil, nil, fmt.Errorf("starting: %w", err)
-	}
-
-	scanner := bufio.NewScanner(stdout)
+	scanner := bufio.NewScanner(bytes.NewReader(out))
 
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -495,11 +491,6 @@ func changedLocales() (adds, dels []string, err error) {
 	err = scanner.Err()
 	if err != nil {
 		return nil, nil, fmt.Errorf("scanning: %w", err)
-	}
-
-	err = cmd.Wait()
-	if err != nil {
-		return nil, nil, fmt.Errorf("waiting: %w", err)
 	}
 
 	return adds, dels, nil

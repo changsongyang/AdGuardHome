@@ -1,6 +1,7 @@
 package home
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -9,7 +10,6 @@ import (
 	"net/http"
 	"net/netip"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"time"
@@ -22,6 +22,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
+	"github.com/AdguardTeam/golibs/osutil/executil"
 	"github.com/quic-go/quic-go/http3"
 )
 
@@ -243,30 +244,61 @@ func checkDNSStubListener(ctx context.Context, l *slog.Logger) (ok bool) {
 		return false
 	}
 
-	cmd := exec.Command("systemctl", "is-enabled", "systemd-resolved")
-	l.DebugContext(ctx, "executing", "cmd", cmd.Path, "args", cmd.Args)
-	_, err := cmd.Output()
-	if err != nil || cmd.ProcessState.ExitCode() != 0 {
+	const (
+		systemctlCmd = "systemctl"
+		grepCmd      = "grep"
+	)
+
+	var (
+		systemctlArgs   = []string{"is-enabled", "systemd-resolved"}
+		systemctlStdout bytes.Buffer
+		systemctlStderr bytes.Buffer
+
+		grepArgs   = []string{"-E", "#?DNSStubListener=yes", "/etc/systemd/resolved.conf"}
+		grepStdout bytes.Buffer
+		grepStderr bytes.Buffer
+	)
+
+	l.DebugContext(ctx, "executing", "cmd", systemctlCmd, "args", systemctlArgs)
+
+	err := executil.Run(
+		ctx,
+		executil.SystemCommandConstructor{},
+		&executil.CommandConfig{
+			Path:   systemctlCmd,
+			Args:   systemctlArgs,
+			Stdout: &systemctlStdout,
+			Stderr: &systemctlStderr,
+		},
+	)
+	if err != nil {
 		l.InfoContext(
 			ctx,
 			"execution failed",
-			"cmd", cmd.Path,
-			"code", cmd.ProcessState.ExitCode(),
+			"cmd", systemctlCmd,
 			slogutil.KeyError, err,
 		)
 
 		return false
 	}
 
-	cmd = exec.Command("grep", "-E", "#?DNSStubListener=yes", "/etc/systemd/resolved.conf")
-	l.DebugContext(ctx, "executing", "cmd", cmd.Path, "args", cmd.Args)
-	_, err = cmd.Output()
-	if err != nil || cmd.ProcessState.ExitCode() != 0 {
+	l.DebugContext(ctx, "executing", "cmd", grepCmd, "args", grepArgs)
+
+	err = executil.Run(
+		ctx,
+		executil.SystemCommandConstructor{},
+		&executil.CommandConfig{
+			Path:   grepCmd,
+			Args:   grepArgs,
+			Stdout: &grepStdout,
+			Stderr: &grepStderr,
+		},
+	)
+	if err != nil {
 		l.InfoContext(
 			ctx,
 			"execution failed",
-			"cmd", cmd.Path,
-			"code", cmd.ProcessState.ExitCode(),
+			"cmd", grepCmd,
 			slogutil.KeyError, err,
 		)
 
@@ -306,15 +338,30 @@ func disableDNSStubListener(ctx context.Context, l *slog.Logger) (err error) {
 		return fmt.Errorf("os.Symlink: %s: %w", resolvConfPath, err)
 	}
 
-	cmd := exec.Command("systemctl", "reload-or-restart", "systemd-resolved")
-	l.DebugContext(ctx, "executing", "cmd", cmd.Path, "args", cmd.Args)
-	_, err = cmd.Output()
+	const (
+		systemctlCmd = "systemctl"
+	)
+
+	var (
+		systemctlArgs   = []string{"reload-or-restart", "systemd-resolved"}
+		systemctlStdout bytes.Buffer
+		systemctlStderr bytes.Buffer
+	)
+
+	l.DebugContext(ctx, "executing", "cmd", systemctlCmd, "args", systemctlArgs)
+
+	err = executil.Run(
+		ctx,
+		executil.SystemCommandConstructor{},
+		&executil.CommandConfig{
+			Path:   systemctlCmd,
+			Args:   systemctlArgs,
+			Stdout: &systemctlStdout,
+			Stderr: &systemctlStderr,
+		},
+	)
 	if err != nil {
-		return err
-	}
-	if cmd.ProcessState.ExitCode() != 0 {
-		return fmt.Errorf("process %s exited with an error: %d",
-			cmd.Path, cmd.ProcessState.ExitCode())
+		return fmt.Errorf("executing cmd: %w", err)
 	}
 
 	return nil
