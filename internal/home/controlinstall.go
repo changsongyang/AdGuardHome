@@ -20,6 +20,7 @@ import (
 	"github.com/AdguardTeam/AdGuardHome/internal/aghhttp"
 	"github.com/AdguardTeam/AdGuardHome/internal/aghnet"
 	"github.com/AdguardTeam/AdGuardHome/internal/version"
+	"github.com/AdguardTeam/golibs/container"
 	"github.com/AdguardTeam/golibs/errors"
 	"github.com/AdguardTeam/golibs/logutil/slogutil"
 	"github.com/AdguardTeam/golibs/osutil/executil"
@@ -202,6 +203,10 @@ func (web *webAPI) handleInstallCheckConfig(w http.ResponseWriter, r *http.Reque
 // It either checks if we have a static IP
 // Or if set=true, it tries to set it
 func handleStaticIP(ip netip.Addr, set bool) staticIPJSON {
+	// TODO(s.chzhen):  Pass context.
+	ctx := context.TODO()
+	cmdCons := executil.SystemCommandConstructor{}
+
 	resp := staticIPJSON{}
 
 	interfaceName := aghnet.InterfaceByIP(ip)
@@ -215,7 +220,7 @@ func handleStaticIP(ip netip.Addr, set bool) staticIPJSON {
 
 	if set {
 		// Try to set static IP for the specified interface
-		err := aghnet.IfaceSetStaticIP(interfaceName)
+		err := aghnet.IfaceSetStaticIP(ctx, cmdCons, interfaceName)
 		if err != nil {
 			resp.Static = "error"
 			resp.Error = err.Error()
@@ -225,7 +230,7 @@ func handleStaticIP(ip netip.Addr, set bool) staticIPJSON {
 
 	// Fallthrough here even if we set static IP
 	// Check if we have a static IP and return the details
-	isStaticIP, err := aghnet.IfaceHasStaticIP(interfaceName)
+	isStaticIP, err := aghnet.IfaceHasStaticIP(ctx, cmdCons, interfaceName)
 	if err != nil {
 		resp.Static = "error"
 		resp.Error = err.Error()
@@ -244,65 +249,30 @@ func checkDNSStubListener(ctx context.Context, l *slog.Logger) (ok bool) {
 		return false
 	}
 
-	const (
-		systemctlCmd = "systemctl"
-		grepCmd      = "grep"
-	)
+	cmds := container.KeyValues[string, []string]{{
+		Key:   "systemctl",
+		Value: []string{"is-enabled", "systemd-resolved"},
+	}, {
+		Key:   "grep",
+		Value: []string{"-E", "#?DNSStubListener=yes", "/etc/systemd/resolved.conf"},
+	}}
 
-	var (
-		systemctlArgs   = []string{"is-enabled", "systemd-resolved"}
-		systemctlStdout bytes.Buffer
-		systemctlStderr bytes.Buffer
+	for _, cmd := range cmds {
+		l.DebugContext(ctx, "executing", "cmd", cmd.Key, "args", cmd.Value)
 
-		grepArgs   = []string{"-E", "#?DNSStubListener=yes", "/etc/systemd/resolved.conf"}
-		grepStdout bytes.Buffer
-		grepStderr bytes.Buffer
-	)
-
-	l.DebugContext(ctx, "executing", "cmd", systemctlCmd, "args", systemctlArgs)
-
-	err := executil.Run(
-		ctx,
-		executil.SystemCommandConstructor{},
-		&executil.CommandConfig{
-			Path:   systemctlCmd,
-			Args:   systemctlArgs,
-			Stdout: &systemctlStdout,
-			Stderr: &systemctlStderr,
-		},
-	)
-	if err != nil {
-		l.InfoContext(
+		err := executil.Run(
 			ctx,
-			"execution failed",
-			"cmd", systemctlCmd,
-			slogutil.KeyError, err,
+			executil.SystemCommandConstructor{},
+			&executil.CommandConfig{
+				Path: cmd.Key,
+				Args: cmd.Value,
+			},
 		)
+		if err != nil {
+			l.InfoContext(ctx, "execution failed", "cmd", cmd.Key, slogutil.KeyError, err)
 
-		return false
-	}
-
-	l.DebugContext(ctx, "executing", "cmd", grepCmd, "args", grepArgs)
-
-	err = executil.Run(
-		ctx,
-		executil.SystemCommandConstructor{},
-		&executil.CommandConfig{
-			Path:   grepCmd,
-			Args:   grepArgs,
-			Stdout: &grepStdout,
-			Stderr: &grepStderr,
-		},
-	)
-	if err != nil {
-		l.InfoContext(
-			ctx,
-			"execution failed",
-			"cmd", grepCmd,
-			slogutil.KeyError, err,
-		)
-
-		return false
+			return false
+		}
 	}
 
 	return true

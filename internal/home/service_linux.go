@@ -87,7 +87,9 @@ func (svc *sysvService) Install() (err error) {
 		return err
 	}
 
-	_, _, err = aghos.RunCommand("update-rc.d", svc.name, "defaults")
+	cmdCons := executil.SystemCommandConstructor{}
+	// TODO(s.chzhen):  Pass context.
+	_, _, err = aghos.RunCommand(context.TODO(), cmdCons, "update-rc.d", svc.name, "defaults")
 
 	// Don't wrap an error since it's informative enough as is.
 	return err
@@ -102,7 +104,9 @@ func (svc *sysvService) Uninstall() (err error) {
 		return err
 	}
 
-	_, _, err = aghos.RunCommand("update-rc.d", svc.name, "remove")
+	cmdCons := executil.SystemCommandConstructor{}
+	// TODO(s.chzhen):  Pass context.
+	_, _, err = aghos.RunCommand(context.TODO(), cmdCons, "update-rc.d", svc.name, "remove")
 
 	// Don't wrap an error since it's informative enough as is.
 	return err

@@ -34,6 +34,8 @@ type Updater struct {
 	client *http.Client
 	logger *slog.Logger
 
+	cmdCons executil.CommandConstructor
+
 	version string
 	channel string
 	goarch  string
@@ -89,6 +91,9 @@ type Config struct {
 	// be nil, see [DefaultVersionURL].
 	VersionCheckURL *url.URL
 
+	// CommandConstructor is used to run external commands.  It must not be nil.
+	CommandConstructor executil.CommandConstructor
+
 	// Version is the current AdGuard Home version.  It must not be empty.
 	Version string
 
@@ -129,6 +134,8 @@ func NewUpdater(conf *Config) *Updater {
 	return &Updater{
 		client: conf.Client,
 		logger: conf.Logger,
+
+		cmdCons: conf.CommandConstructor,
 
 		version: conf.Version,
 		channel: conf.Channel,
@@ -293,9 +300,11 @@ func (u *Updater) check(ctx context.Context) (err error) {
 		stderr bytes.Buffer
 	)
 
+	u.logger.DebugContext(ctx, "executing", "cmd", u.updateExeName, "args", args)
+
 	err = executil.Run(
 		ctx,
-		executil.SystemCommandConstructor{},
+		u.cmdCons,
 		&executil.CommandConfig{
 			Path:   u.updateExeName,
 			Args:   args,

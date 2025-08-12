@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/AdguardTeam/golibs/errors"
+	"github.com/AdguardTeam/golibs/ioutil"
 	"github.com/AdguardTeam/golibs/osutil"
 	"github.com/AdguardTeam/golibs/osutil/executil"
 )
@@ -52,41 +53,43 @@ func HaveAdminRights() (bool, error) {
 const MaxCmdOutputSize = 64 * 1024
 
 // RunCommand runs shell command.
-func RunCommand(command string, arguments ...string) (code int, output []byte, err error) {
-	// TODO(s.chzhen):  Pass context.
-	ctx := context.TODO()
-
+//
+// TODO(s.chzhen):  Consider removing this after addressing the current behavior
+// where a non-zero exit code is returned together with a nil error.
+func RunCommand(
+	ctx context.Context,
+	cmdCons executil.CommandConstructor,
+	command string,
+	arguments ...string,
+) (code int, output []byte, err error) {
 	stdoutBuf := bytes.Buffer{}
 	stderrBuf := bytes.Buffer{}
 
 	err = executil.Run(
 		ctx,
-		executil.SystemCommandConstructor{},
+		cmdCons,
 		&executil.CommandConfig{
 			Path:   command,
 			Args:   arguments,
-			Stdout: &stdoutBuf,
+			Stdout: ioutil.NewTruncatedWriter(&stdoutBuf, MaxCmdOutputSize),
 			Stderr: &stderrBuf,
 		},
 	)
 
-	out := stdoutBuf.Bytes()
-	if len(out) > MaxCmdOutputSize {
-		out = out[:MaxCmdOutputSize]
+	if err == nil {
+		return osutil.ExitCodeSuccess, stdoutBuf.Bytes(), nil
 	}
 
 	code, ok := executil.ExitCodeFromError(err)
-	if err != nil {
-		if ok {
-			return code, stderrBuf.Bytes(), nil
-		}
-
-		return osutil.ExitCodeFailure,
-			nil,
-			fmt.Errorf("command %q failed: %w: %s", command, err, out)
+	if ok {
+		// Mirror the old behavior and return a nil-error on non-zero code
+		// status.
+		return code, stderrBuf.Bytes(), nil
 	}
 
-	return code, out, nil
+	return osutil.ExitCodeFailure,
+		nil,
+		fmt.Errorf("command %q failed: %w: %s", command, err, stdoutBuf.Bytes())
 }
 
 // PIDByCommand searches for process named command and returns its PID ignoring
@@ -101,6 +104,8 @@ func PIDByCommand(
 	const psCmd = "ps"
 
 	psArgs := []string{"-A", "-o", "pid=", "-o", "comm="}
+
+	l.DebugContext(ctx, "executing", "cmd", psCmd, "args", psArgs)
 
 	// Don't use -C flag here since it's a feature of linux's ps
 	// implementation.  Use POSIX-compatible flags instead.
