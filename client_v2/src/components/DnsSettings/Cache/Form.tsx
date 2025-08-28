@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -10,6 +10,7 @@ import { Checkbox } from 'panel/common/controls/Checkbox';
 import { Input } from 'panel/common/controls/Input';
 import { Button } from 'panel/common/ui/Button';
 import { FaqTooltip } from 'panel/common/ui/FaqTooltip';
+import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
 import theme from 'panel/lib/theme';
 
 const INPUTS_FIELDS = [
@@ -48,6 +49,7 @@ type CacheFormProps = {
 
 export const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
     const dispatch = useDispatch();
+    const [openConfirmClear, setOpenConfirmClear] = useState(false);
 
     const { processingSetConfig } = useSelector((state: RootState) => state.dnsConfig);
 
@@ -75,10 +77,17 @@ export const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
     const minExceedsMax = cache_ttl_min > 0 && cache_ttl_max > 0 && cache_ttl_min > cache_ttl_max;
     const cacheSizeZeroWhenEnabled = cache_enabled && cache_size === 0;
 
-    const handleClearCache = () => {
-        if (window.confirm(intl.getMessage('confirm_dns_cache_clear'))) {
-            dispatch(clearDnsCache());
-        }
+    const handleClearCacheOpen = () => {
+        setOpenConfirmClear(true);
+    };
+
+    const handleClearCacheClose = () => {
+        setOpenConfirmClear(false);
+    };
+
+    const handleClearCacheConfirm = () => {
+        dispatch(clearDnsCache());
+        setOpenConfirmClear(false);
     };
 
     return (
@@ -184,11 +193,23 @@ export const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
                     id="dns_clear"
                     variant="secondary-danger"
                     size="small"
-                    onClick={handleClearCache}
+                    onClick={handleClearCacheOpen}
                     className={theme.form.button}>
                     {intl.getMessage('cache_config_clear')}
                 </Button>
             </div>
+
+            {openConfirmClear && (
+                <ConfirmDialog
+                    onClose={handleClearCacheClose}
+                    onConfirm={handleClearCacheConfirm}
+                    buttonText={intl.getMessage('confirm')}
+                    cancelText={intl.getMessage('cancel')}
+                    title={intl.getMessage('cache_confirm_clear_title')}
+                    text={intl.getMessage('cache_confirm_clear_desc')}
+                    buttonVariant="danger"
+                />
+            )}
         </form>
     );
 };

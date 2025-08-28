@@ -878,6 +878,8 @@
     "cache_config_clear": "Clear cache",
     "cache_enabled": "Enable cache",
     "cache_enabled_desc": "Store DNS responses locally",
+    "cache_confirm_clear_title": "Clear DNS cache",
+    "cache_confirm_clear_desc": "This will remove all cached DNS responses. Subsequent DNS queries may be slower until the cache is rebuilt",
     "access_settings_title": "Access settings",
     "access_settings_allowed_title": "Allowed clients, one per line",
     "access_settings_allowed_faq": "A list of CIDRs, IP addresses, or <a>ClientIDs</a>. If this field has entries, AdGuard Home will accept requests only from these clients",
