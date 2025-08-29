@@ -137,7 +137,7 @@ export const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
                                         const value = e.target.value === '' ? 0 : Number(e.target.value);
                                         field.onChange(value);
                                     }}
-                                    value={field.value === 0 ? '' : String(field.value)}
+                                    value={String(field.value)}
                                 />
                             )}
                         />
