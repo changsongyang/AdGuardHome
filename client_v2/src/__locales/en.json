@@ -876,6 +876,8 @@
     "cache_config_optimistic": "Optimistic caching",
     "cache_config_optimistic_desc": "AdGuard Home will respond from the cache even if the entries have expired and will try to update them",
     "cache_config_clear": "Clear cache",
+    "cache_config_size_validation": "The cache size must be greater than zero when enabled",
+    "cache_config_ttl_validation": "Minimum cache TTL override must be less than or equal to the maximum",
     "cache_enabled": "Enable cache",
     "cache_enabled_desc": "Store DNS responses locally",
     "cache_confirm_clear_title": "Clear DNS cache",

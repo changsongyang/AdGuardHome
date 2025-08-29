@@ -150,7 +150,6 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                 errorMessage={fieldState.error?.message}
                                 min={UINT32_RANGE.MIN}
                                 max={UINT32_RANGE.MAX}
-                                disabled={!!processing}
                                 onChange={(e) => {
                                     const { value } = e.target;
                                     field.onChange(toNumber(value));
@@ -183,7 +182,6 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                 errorMessage={fieldState.error?.message}
                                 min={0}
                                 max={32}
-                                disabled={!!processing}
                                 onChange={(e) => {
                                     const { value } = e.target;
                                     field.onChange(toNumber(value));
@@ -216,7 +214,6 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                 errorMessage={fieldState.error?.message}
                                 min={0}
                                 max={128}
-                                disabled={!!processing}
                                 onChange={(e) => {
                                     const { value } = e.target;
                                     field.onChange(toNumber(value));
@@ -245,7 +242,6 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                 }
                                 placeholder={intl.getMessage('ip_addresses_placeholder')}
                                 errorMessage={fieldState.error?.message}
-                                disabled={!!processing}
                                 size="medium"
                             />
                         )}
@@ -263,7 +259,6 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                 onChange={field.onChange}
                                 onBlur={field.onBlur}
                                 data-testid="dns_config_edns_cs_enabled"
-                                disabled={!!processing}
                                 verticalAlign="start">
                                 <div>
                                     <div className={theme.text.t2}>{intl.getMessage('server_config_edns_enable')}</div>
@@ -286,7 +281,7 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                     onChange={field.onChange}
                                     onBlur={field.onBlur}
                                     data-testid="dns_config_edns_use_custom_ip"
-                                    disabled={processing || !edns_cs_enabled}
+                                    disabled={!edns_cs_enabled}
                                     verticalAlign="start">
                                     <div>
                                         <div className={theme.text.t2}>
@@ -318,7 +313,7 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                         data-testid="dns_config_edns_cs_custom_ip"
                                         placeholder={intl.getMessage('enter_ip_address_placeholder')}
                                         errorMessage={fieldState.error?.message}
-                                        disabled={processing || !edns_cs_enabled}
+                                        disabled={!edns_cs_enabled}
                                     />
                                 )}
                             />
@@ -338,7 +333,6 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                     onChange={field.onChange}
                                     onBlur={field.onBlur}
                                     id={`dns_config_${name}`}
-                                    disabled={!!processing}
                                     verticalAlign="start">
                                     <div>
                                         <div className={theme.text.t2}>{placeholder}</div>
@@ -371,7 +365,6 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                 handleChange={field.onChange}
                                 name={field.name}
                                 options={blockingModeOptions}
-                                disabled={!!processing}
                             />
                         )}
                     />
@@ -403,7 +396,6 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                             }
                                             placeholder={placeholder}
                                             errorMessage={fieldState.error?.message}
-                                            disabled={!!processing}
                                         />
                                     )}
                                 />
@@ -435,7 +427,6 @@ export const Form = ({ processing, initialValues, onSubmit }: Props) => {
                                 errorMessage={fieldState.error?.message}
                                 min={UINT32_RANGE.MIN}
                                 max={UINT32_RANGE.MAX}
-                                disabled={!!processing}
                                 onChange={(e) => {
                                     const { value } = e.target;
                                     field.onChange(toNumber(value));

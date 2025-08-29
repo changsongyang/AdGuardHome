@@ -73,7 +73,7 @@ export const Form = ({ initialValues, onSubmit, processingSet }: FormProps) => {
         control,
         handleSubmit,
         watch,
-        formState: { isSubmitting, isDirty },
+        formState: { isSubmitting },
     } = useForm<FormData>({
         mode: 'onBlur',
         defaultValues: {
@@ -82,8 +82,6 @@ export const Form = ({ initialValues, onSubmit, processingSet }: FormProps) => {
             blocked_hosts: initialValues?.blocked_hosts || '',
         },
     });
-
-    const allowedClients = watch('allowed_clients');
 
     const renderField = ({
         id,
@@ -96,8 +94,6 @@ export const Form = ({ initialValues, onSubmit, processingSet }: FormProps) => {
         faq: ReactNode;
         normalizeOnBlur: (value: string) => string;
     }) => {
-        const disabled = allowedClients && id === 'disallowed_clients';
-
         return (
             <div key={id} className={theme.form.input}>
                 <Controller
@@ -111,11 +107,9 @@ export const Form = ({ initialValues, onSubmit, processingSet }: FormProps) => {
                             label={
                                 <>
                                     {title}
-                                    {disabled && <>&nbsp;({intl.getMessage('disabled')})</>}
                                     <FaqTooltip text={faq} menuSize="large" spacing={id === 'blocked_hosts'} />
                                 </>
                             }
-                            disabled={disabled || processingSet}
                             onBlur={(e) => {
                                 field.onChange(normalizeOnBlur(e.target.value));
                             }}
@@ -137,7 +131,7 @@ export const Form = ({ initialValues, onSubmit, processingSet }: FormProps) => {
                     id="access_save"
                     variant="primary"
                     size="small"
-                    disabled={isSubmitting || !isDirty || processingSet}
+                    disabled={isSubmitting || processingSet}
                     className={theme.form.button}>
                     {intl.getMessage('save')}
                 </Button>

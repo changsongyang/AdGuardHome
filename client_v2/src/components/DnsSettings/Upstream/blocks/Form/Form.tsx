@@ -65,7 +65,7 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
         control,
         handleSubmit,
         watch,
-        formState: { isSubmitting, isDirty },
+        formState: { isSubmitting },
     } = useForm<FormData>({
         mode: 'onBlur',
         defaultValues: {
@@ -97,7 +97,7 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
     };
 
     const isSavingDisabled = () => {
-        return isSubmitting || !isDirty || processingSetConfig || processingTestUpstream;
+        return isSubmitting || processingSetConfig || processingTestUpstream;
     };
 
     const isTestDisabled = () => {
@@ -145,7 +145,7 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                                         </>
                                     }
                                     placeholder={intl.getMessage('upstream_dns_placeholder')}
-                                    disabled={!!upstreamDnsFile || processingSetConfig || processingTestUpstream}
+                                    disabled={!!upstreamDnsFile || processingTestUpstream}
                                     size="medium"
                                 />
                             </>
@@ -162,7 +162,7 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                                 {...field}
                                 handleChange={field.onChange}
                                 options={upstreamModeOptions}
-                                disabled={processingSetConfig || processingTestUpstream}
+                                disabled={processingTestUpstream}
                                 verticalAlign="start"
                                 textClassName={s.radioText}
                             />
@@ -192,7 +192,6 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                                     </>
                                 }
                                 placeholder={intl.getMessage('ip_addresses_placeholder')}
-                                disabled={processingSetConfig}
                                 size="medium"
                             />
                         )}
@@ -218,7 +217,6 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                                     </>
                                 }
                                 placeholder={intl.getMessage('ip_addresses_placeholder')}
-                                disabled={processingSetConfig}
                                 size="medium"
                             />
                         )}
@@ -262,7 +260,6 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                                     </>
                                 }
                                 placeholder={intl.getMessage('ip_addresses_placeholder')}
-                                disabled={processingSetConfig}
                                 size="medium"
                             />
                         )}
@@ -280,7 +277,6 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                                 checked={field.value}
                                 onChange={field.onChange}
                                 onBlur={field.onBlur}
-                                disabled={processingSetConfig}
                                 verticalAlign="start">
                                 <div>
                                     <div className={theme.text.t2}>
@@ -306,7 +302,6 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                                 checked={field.value}
                                 onChange={field.onChange}
                                 onBlur={field.onBlur}
-                                disabled={processingSetConfig}
                                 verticalAlign="start">
                                 <div>
                                     <div className={theme.text.t2}>
@@ -337,7 +332,6 @@ export const Form = ({ initialValues, onSubmit }: FormProps) => {
                                     </>
                                 }
                                 placeholder={intl.getMessage('upstream_timeout_placeholder')}
-                                disabled={processingSetConfig}
                                 min={1}
                                 max={UINT32_RANGE.MAX}
                                 onChange={(e) => {

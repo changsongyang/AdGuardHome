@@ -104,7 +104,6 @@ export const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
                                 onChange={field.onChange}
                                 onBlur={field.onBlur}
                                 data-testid="dns_cache_enabled"
-                                disabled={processingSetConfig}
                                 verticalAlign="start">
                                 <div>
                                     <div className={theme.text.t2}>{intl.getMessage('cache_enabled')}</div>
@@ -132,7 +131,6 @@ export const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
                                         </>
                                     }
                                     placeholder={placeholder}
-                                    disabled={processingSetConfig}
                                     min={0}
                                     max={UINT32_RANGE.MAX}
                                     onChange={(e) => {
@@ -145,12 +143,14 @@ export const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
                         />
 
                         {name === CACHE_CONFIG_FIELDS.cache_size && cacheSizeZeroWhenEnabled && (
-                            <span className={theme.form.error}>{intl.getMessage('cache_size_validation')}</span>
+                            <div className={theme.form.error}>{intl.getMessage('cache_config_size_validation')}</div>
                         )}
                     </div>
                 ))}
 
-                {minExceedsMax && <div className={theme.form.error}>{intl.getMessage('ttl_cache_validation')}</div>}
+                {minExceedsMax && (
+                    <div className={theme.form.error}>{intl.getMessage('cache_config_ttl_validation')}</div>
+                )}
 
                 <div className={theme.form.input}>
                     <Controller
@@ -163,7 +163,6 @@ export const Form = ({ initialValues, onSubmit }: CacheFormProps) => {
                                 onChange={field.onChange}
                                 onBlur={field.onBlur}
                                 data-testid="dns_cache_optimistic"
-                                disabled={processingSetConfig}
                                 verticalAlign="start">
                                 <div>
                                     <div className={theme.text.t2}>{intl.getMessage('cache_config_optimistic')}</div>
