@@ -72,7 +72,6 @@ export const Form = ({ initialValues, onSubmit, processingSet }: FormProps) => {
     const {
         control,
         handleSubmit,
-        watch,
         formState: { isSubmitting },
     } = useForm<FormData>({
         mode: 'onBlur',
