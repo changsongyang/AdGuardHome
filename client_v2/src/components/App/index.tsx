@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, ComponentType } from 'react';
 
 import { HashRouter, Route } from 'react-router-dom';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
@@ -10,8 +10,9 @@ import { Header } from 'panel/common/ui/Header';
 import { Settings } from 'panel/components/Settings';
 import { LocalesType } from 'panel/common/intl';
 import { Encryption } from 'panel/components/Encryption';
-
+import { Blocklists } from 'panel/components/Blocklists';
 import { LOCAL_STORAGE_KEYS, LocalStorageHelper } from 'panel/helpers/localStorageHelper';
+
 import Toasts from '../Toasts';
 import i18n from '../../i18n';
 import { THEMES } from '../../helpers/constants';
@@ -23,7 +24,7 @@ import s from './styles.module.pcss';
 
 type RouteConfig = {
     path: string;
-    component: React.ComponentType;
+    component: ComponentType;
     exact: boolean;
 };
 
@@ -36,6 +37,11 @@ const ROUTES: RouteConfig[] = [
     {
         path: '/encryption',
         component: Encryption,
+        exact: true,
+    },
+    {
+        path: '/blocklists',
+        component: Blocklists,
         exact: true,
     },
 ];
