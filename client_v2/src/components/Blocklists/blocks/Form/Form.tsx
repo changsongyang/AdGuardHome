@@ -5,7 +5,7 @@ import { MODAL_TYPE, TAB_TYPE } from 'panel/helpers/constants';
 import { Button } from 'panel/common/ui/Button';
 import intl from 'panel/common/intl';
 import theme from 'panel/lib/theme';
-import { FormContent } from './FormContent';
+import { FormContent } from './blocks/FormContent';
 
 export type FormValues = {
     enabled: boolean;
