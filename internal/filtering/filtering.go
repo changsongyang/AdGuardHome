@@ -796,9 +796,9 @@ func ruleListFromFilter(f Filter) (rl filterlist.Interface, skip bool, err error
 	id := int(f.ID)
 
 	if len(f.Data) != 0 {
-		return filterlist.NewString(&filterlist.StringConfig{
+		return filterlist.NewBytes(&filterlist.BytesConfig{
 			ID:             id,
-			RulesText:      string(f.Data),
+			RulesText:      f.Data,
 			IgnoreCosmetic: true,
 		}), false, nil
 	}
@@ -818,9 +818,9 @@ func ruleListFromFilter(f Filter) (rl filterlist.Interface, skip bool, err error
 			return nil, false, fmt.Errorf("reading filter content: %w", err)
 		}
 
-		return filterlist.NewString(&filterlist.StringConfig{
+		return filterlist.NewBytes(&filterlist.BytesConfig{
 			ID:             id,
-			RulesText:      string(data),
+			RulesText:      data,
 			IgnoreCosmetic: true,
 		}), false, nil
 	}

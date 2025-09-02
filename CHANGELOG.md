@@ -18,6 +18,10 @@ See also the [v0.107.66 GitHub milestone][ms-v0.107.66].
 NOTE: Add new changes BELOW THIS COMMENT.
 -->
 
+### Changed
+
+- Optimized matching of filtering rules.
+
 ### Fixed
 
 - Authentication errors in the Web UI when AdGuard Home is behind a proxy that sets Basic Auth headers ([#7987]).
