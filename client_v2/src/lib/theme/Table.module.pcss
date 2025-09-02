@@ -1,0 +1,27 @@
+.sortAsc,
+.sortDesc {
+    margin-left: 8px;
+    color: var(--default-gray-icons);
+}
+
+.sortAsc {
+    transform: rotate(90deg);
+}
+
+.sortDesc {
+    transform: rotate(-90deg);
+}
+
+.action {
+    width: 24px;
+    height: 24px;
+    border: 0;
+    outline: 0;
+    cursor: pointer;
+    background: none;
+    color: var(--default-gray-icons);
+
+    &_danger {
+        color: var(--red);
+    }
+}

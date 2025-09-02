@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useEffect, useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import cn from 'clsx';
 
 import intl from 'panel/common/intl';
@@ -7,8 +7,8 @@ import { MODAL_TYPE } from 'panel/helpers/constants';
 import { getCurrentFilter } from 'panel/helpers/helpers';
 import filtersCatalog from 'panel/helpers/filters/filters';
 import { RootState } from 'panel/initialState';
-import { PageLoader } from 'panel/common/ui/Loader';
 import theme from 'panel/lib/theme';
+import { ConfirmDialog } from 'panel/common/ui/ConfirmDialog';
 import {
     getFilteringStatus,
     removeFilter,
@@ -18,24 +18,25 @@ import {
     refreshFilters,
     editFilter,
 } from 'panel/actions/filtering';
+import { Icon } from 'panel/common/ui/Icon';
 import { Modal } from './blocks/Modal';
-import { Actions } from './blocks/Actions';
 import { Table } from './blocks/Table';
-import s from './styles.module.pcss';
+
+import s from './Blocklists.module.pcss';
 
 export const Blocklists = () => {
     const dispatch = useDispatch();
-    const filtering = useSelector((state: RootState) => state.filtering!);
+    const { filtering } = useSelector((state: RootState) => state);
+    const [openConfirmDelete, setOpenConfirmDelete] = useState(false);
+    const [filterToDelete, setFilterToDelete] = useState<{ url: string; name: string }>({ url: '', name: '' });
 
     const {
         filters,
         isModalOpen,
         isFilterAdded,
         processingRefreshFilters,
-        processingRemoveFilter,
         processingAddFilter,
         processingConfigFilter,
-        processingFilters,
         modalType,
         modalFilterUrl,
     } = filtering;
@@ -50,20 +51,34 @@ export const Blocklists = () => {
                 dispatch(editFilter(modalFilterUrl, values));
                 break;
             case MODAL_TYPE.ADD_FILTERS: {
+                dispatch(addFilter(values.url, values.name));
                 break;
             }
+            case MODAL_TYPE.SELECT_MODAL_TYPE:
             case MODAL_TYPE.CHOOSE_FILTERING_LIST: {
-                const changedValues = Object.entries(values)?.reduce((acc: Record<string, any>, [key, value]) => {
-                    if (value && key in filtersCatalog.filters) {
-                        acc[key] = value;
-                    }
-                    return acc;
-                }, {});
+                if (values.url && values.name) {
+                    // Manual filter form submission
+                    dispatch(addFilter(values.url, values.name));
+                } else {
+                    // Filter list selection submission
+                    const existingFilterSources = new Set(filters.map((filter) => filter.url));
 
-                Object.keys(changedValues).forEach((fieldName) => {
-                    const { source, name } = filtersCatalog.filters[fieldName];
-                    dispatch(addFilter(source, name));
-                });
+                    const changedValues = Object.entries(values)?.reduce((acc: Record<string, any>, [key, value]) => {
+                        if (value && key in filtersCatalog.filters) {
+                            const filterSource = filtersCatalog.filters[key].source;
+                            // Only include if not already added
+                            if (!existingFilterSources.has(filterSource)) {
+                                acc[key] = value;
+                            }
+                        }
+                        return acc;
+                    }, {});
+
+                    Object.keys(changedValues).forEach((fieldName) => {
+                        const { source, name } = filtersCatalog.filters[fieldName];
+                        dispatch(addFilter(source, name));
+                    });
+                }
                 break;
             }
             default:
@@ -71,10 +86,29 @@ export const Blocklists = () => {
         }
     };
 
-    const handleDelete = (url: string) => {
-        if (window.confirm(intl.getMessage('list_confirm_delete'))) {
-            dispatch(removeFilter(url));
+    const handleAddFilter = (url: string, name: string) => {
+        dispatch(addFilter(url, name));
+    };
+
+    const handleToggleFilteringModal = (payload?: { type: string; url?: string }) => {
+        dispatch(toggleFilteringModal(payload));
+    };
+
+    const handleDeleteOpen = (url: string, name: string) => {
+        setFilterToDelete({ url, name });
+        setOpenConfirmDelete(true);
+    };
+
+    const handleDeleteClose = () => {
+        setOpenConfirmDelete(false);
+        setFilterToDelete({ url: '', name: '' });
+    };
+
+    const handleDeleteConfirm = () => {
+        if (filterToDelete.url) {
+            dispatch(removeFilter(filterToDelete.url));
         }
+        handleDeleteClose();
     };
 
     const toggleFilter = (url: string, data: { name: string; url: string; enabled: boolean }) => {
@@ -90,64 +124,76 @@ export const Blocklists = () => {
     };
 
     const currentFilterData = getCurrentFilter(modalFilterUrl, filters);
-    const loading =
-        processingConfigFilter ||
-        processingFilters ||
-        processingAddFilter ||
-        processingRemoveFilter ||
-        processingRefreshFilters;
 
     return (
-        <div className={theme.layout.container}>
-            <h1 className={cn(theme.layout.title, theme.title.h4, theme.title.h3_tablet, s.title)}>
-                {intl.getMessage('blocklists_title')}
-            </h1>
+        <div className={cn(theme.layout.container, theme.layout.container_wide)}>
+            <div className={s.header}>
+                <h1 className={cn(theme.layout.title, theme.title.h4, theme.title.h3_tablet)}>
+                    {intl.getMessage('blocklists_title')}
+                </h1>
 
-            {loading ? (
-                <PageLoader />
-            ) : (
-                <>
-                    <Modal
-                        isOpen={isModalOpen}
-                        toggleFilteringModal={() => dispatch(toggleFilteringModal())}
-                        addFilter={(url: string, name: string) => dispatch(addFilter(url, name))}
-                        isFilterAdded={isFilterAdded}
-                        processingAddFilter={processingAddFilter}
-                        processingConfigFilter={processingConfigFilter}
-                        handleSubmit={handleSubmit}
-                        modalType={modalType}
-                        currentFilterData={currentFilterData}
-                        whitelist={false}
-                        filters={filters}
-                        filtersCatalog={filtersCatalog}
-                    />
+                <button
+                    type="button"
+                    onClick={handleRefresh}
+                    disabled={processingRefreshFilters}
+                    className={cn(s.button, s.button_checkUpdates)}>
+                    <Icon icon="refresh" color="green" />
+                    {intl.getMessage('check_updates_btn')}
+                </button>
 
-                    <div className="content">
-                        <div className="row">
-                            <div className="col-md-12">
-                                <div>
-                                    {intl.getMessage('filters_and_hosts_hint')}
-                                    <Table
-                                        filters={filters}
-                                        loading={loading}
-                                        processingConfigFilter={processingConfigFilter}
-                                        toggleFilteringModal={(payload?: { type: string; url?: string }) =>
-                                            dispatch(toggleFilteringModal(payload))
-                                        }
-                                        handleDelete={handleDelete}
-                                        toggleFilter={toggleFilter}
-                                    />
+                <button
+                    type="button"
+                    onClick={handleRefresh}
+                    disabled={processingRefreshFilters}
+                    className={cn(s.button, s.button_settings)}>
+                    <Icon icon="settings" color="green" />
+                </button>
+            </div>
 
-                                    <Actions
-                                        handleAdd={openSelectTypeModal}
-                                        handleRefresh={handleRefresh}
-                                        processingRefreshFilters={processingRefreshFilters}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </>
+            <div className={s.desc}>{intl.getMessage('blocklists_desc')}</div>
+
+            <div className={s.group}>
+                <button type="button" className={cn(s.button, s.button_add)} onClick={openSelectTypeModal}>
+                    <Icon icon="plus" color="green" />
+                    {intl.getMessage('add_blocklist')}
+                </button>
+            </div>
+
+            <Modal
+                isOpen={isModalOpen}
+                toggleFilteringModal={handleToggleFilteringModal}
+                addFilter={handleAddFilter}
+                isFilterAdded={isFilterAdded}
+                processingAddFilter={processingAddFilter}
+                processingConfigFilter={processingConfigFilter}
+                handleSubmit={handleSubmit}
+                modalType={modalType}
+                currentFilterData={currentFilterData}
+                filters={filters}
+            />
+
+            <div className={s.group}>
+                <Table
+                    filters={filters}
+                    processingConfigFilter={processingConfigFilter}
+                    toggleFilteringModal={handleToggleFilteringModal}
+                    handleDelete={handleDeleteOpen}
+                    toggleFilter={toggleFilter}
+                />
+            </div>
+
+            {openConfirmDelete && (
+                <ConfirmDialog
+                    onClose={handleDeleteClose}
+                    onConfirm={handleDeleteConfirm}
+                    buttonText={intl.getMessage('remove')}
+                    cancelText={intl.getMessage('cancel')}
+                    title={intl.getMessage('blocklist_remove')}
+                    text={intl.getMessage('blocklist_remove_desc', {
+                        value: filterToDelete.name || filterToDelete.url,
+                    })}
+                    buttonVariant="danger"
+                />
             )}
         </div>
     );

@@ -129,7 +129,12 @@ export const MODAL_TYPE = {
     ADD_LEASE: 'ADD_LEASE',
     ADD_CLIENT: 'ADD_CLIENT',
     EDIT_CLIENT: 'EDIT_CLIENT',
-};
+} as const;
+
+export const TAB_TYPE = {
+    LIST: 'list',
+    MANUAL: 'manual',
+} as const;
 
 export const CLIENT_ID = {
     MAC: 'mac',

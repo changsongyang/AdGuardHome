@@ -493,6 +493,7 @@ export const getCurrentFilter = (url: any, filters: any) => {
     }
 
     return {
+        enabled: true,
         name: '',
         url: '',
     };

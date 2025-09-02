@@ -69,6 +69,7 @@ const filtering = handleActions(
                 isModalOpen: !state.isModalOpen,
                 isFilterAdded: false,
                 modalType: '',
+                modalFilterUrl: '',
             };
             return newState;
         },

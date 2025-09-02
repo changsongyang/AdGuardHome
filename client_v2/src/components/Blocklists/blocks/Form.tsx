@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 
-import { MODAL_TYPE } from 'panel/helpers/constants';
+import { MODAL_TYPE, TAB_TYPE } from 'panel/helpers/constants';
+import { Button } from 'panel/common/ui/Button';
+import intl from 'panel/common/intl';
+import theme from 'panel/lib/theme';
 import { FormContent } from './FormContent';
-import { FormFooter } from './FormFooter';
 
 export type FormValues = {
     enabled: boolean;
@@ -22,7 +24,6 @@ type Props = {
     onSubmit: (values: FormValues) => void;
     processingAddFilter: boolean;
     processingConfigFilter: boolean;
-    whitelist?: boolean;
     modalType: string;
     toggleFilteringModal: ({ type }: { type?: keyof typeof MODAL_TYPE }) => void;
     selectedSources?: Record<string, boolean>;
@@ -33,9 +34,7 @@ export const Form = ({
     closeModal,
     processingAddFilter,
     processingConfigFilter,
-    whitelist,
     modalType,
-    toggleFilteringModal,
     selectedSources,
     onSubmit,
     initialValues,
@@ -47,36 +46,56 @@ export const Form = ({
         },
         mode: 'onBlur',
     });
-    const { handleSubmit } = methods;
-    const [activeTab, setActiveTab] = useState('manual');
+    const { handleSubmit, reset } = methods;
+
+    useEffect(() => {
+        reset({
+            ...defaultValues,
+            ...initialValues,
+        });
+    }, [initialValues, reset]);
+
+    const [activeTab, setActiveTab] = useState<string>(TAB_TYPE.LIST);
 
     const handleCancel = () => {
         closeModal();
-        setTimeout(() => {
-            toggleFilteringModal(undefined);
-        }, 300);
     };
 
     return (
         <FormProvider {...methods}>
             <form onSubmit={handleSubmit(onSubmit)}>
-                <div className="modal-body modal-body--filters">
+                <div className={theme.dialog.description}>{intl.getMessage('blocklist_add_desc')}</div>
+
+                <div>
                     <FormContent
                         modalType={modalType}
-                        whitelist={whitelist}
                         selectedSources={selectedSources}
                         activeTab={activeTab}
                         onTabChange={setActiveTab}
                     />
                 </div>
 
-                <FormFooter
-                    modalType={modalType}
-                    activeTab={activeTab}
-                    processingAddFilter={processingAddFilter}
-                    processingConfigFilter={processingConfigFilter}
-                    onCancel={handleCancel}
-                />
+                <div className={theme.dialog.footer}>
+                    <Button
+                        type="submit"
+                        id="filters_save"
+                        variant="primary"
+                        size="medium"
+                        disabled={processingAddFilter || processingConfigFilter}
+                        className={theme.dialog.button}>
+                        {intl.getMessage('save')}
+                    </Button>
+
+                    <Button
+                        type="button"
+                        id="filters_cancel"
+                        variant="secondary"
+                        size="medium"
+                        onClick={handleCancel}
+                        className={theme.dialog.button}>
+                        {intl.getMessage('cancel')}
+                    </Button>
+                </div>
             </form>
         </FormProvider>
     );

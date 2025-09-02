@@ -3,30 +3,19 @@ import React from 'react';
 import intl from 'panel/common/intl';
 import { Dialog } from 'panel/common/ui/Dialog/Dialog';
 import { MODAL_TYPE } from 'panel/helpers/constants';
-import { getMap, Filter } from 'panel/helpers/helpers';
+import { Filter } from 'panel/helpers/helpers';
+import filtersCatalog from 'panel/helpers/filters/filters';
+
 import { Form, FormValues } from './Form';
 
-const MODAL_TYPE_TO_TITLE_TYPE_MAP = {
-    [MODAL_TYPE.EDIT_FILTERS]: 'edit',
-    [MODAL_TYPE.ADD_FILTERS]: 'new',
-    [MODAL_TYPE.EDIT_CLIENT]: 'edit',
-    [MODAL_TYPE.ADD_CLIENT]: 'new',
-    [MODAL_TYPE.SELECT_MODAL_TYPE]: 'new',
-    [MODAL_TYPE.CHOOSE_FILTERING_LIST]: 'choose',
-};
-
-/**
- * @param modalType {'EDIT_FILTERS' | 'ADD_FILTERS' | 'CHOOSE_FILTERING_LIST'}
- * @param whitelist {boolean}
- * @returns {'new_allowlist' | 'edit_allowlist' | 'choose_allowlist' |
- *           'new_blocklist' | 'edit_blocklist' | 'choose_blocklist' | null}
- */
-const getTitle = (modalType: string, whitelist?: boolean) => {
-    const titleType = MODAL_TYPE_TO_TITLE_TYPE_MAP[modalType];
-    if (!titleType) {
-        return null;
+const getTitle = (modalType: string) => {
+    if (modalType === MODAL_TYPE.CHOOSE_FILTERING_LIST) {
+        return intl.getMessage('blocklists_add_list');
     }
-    return `${titleType}_${whitelist ? 'allowlist' : 'blocklist'}`;
+    if (modalType === MODAL_TYPE.EDIT_FILTERS) {
+        return intl.getMessage('blocklist_edit');
+    }
+    return intl.getMessage('blocklists_add');
 };
 
 interface SelectedValues {
@@ -34,12 +23,12 @@ interface SelectedValues {
     selectedSources: Record<string, boolean>;
 }
 
-const getSelectedValues = (filters: Filter[], catalogSourcesToIdMap: Record<string, number>): SelectedValues =>
+const getSelectedValues = (filters: Filter[], catalogSourcesToIdMap: Record<string, string>): SelectedValues =>
     filters.reduce(
         (acc: SelectedValues, { url }: Filter) => {
             if (Object.prototype.hasOwnProperty.call(catalogSourcesToIdMap, url)) {
-                const fieldId = `filter${catalogSourcesToIdMap[url]}`;
-                acc.selectedFilterIds[fieldId] = true;
+                const filterId = catalogSourcesToIdMap[url];
+                acc.selectedFilterIds[filterId] = true;
                 acc.selectedSources[url] = true;
             }
             return acc;
@@ -49,11 +38,6 @@ const getSelectedValues = (filters: Filter[], catalogSourcesToIdMap: Record<stri
             selectedSources: {} as Record<string, boolean>,
         } as SelectedValues,
     );
-
-type FiltersCatalog = {
-    categories: Record<string, { name: string; description: string }>;
-    filters: Record<string, { source: string; name: string; categoryId: string; homepage: string }>;
-};
 
 type Props = {
     toggleFilteringModal: () => void;
@@ -65,9 +49,7 @@ type Props = {
     handleSubmit: (values: FormValues) => void;
     modalType: string;
     currentFilterData: Partial<Filter>;
-    whitelist?: boolean;
     filters: Filter[];
-    filtersCatalog: FiltersCatalog;
 };
 
 export const Modal = ({
@@ -77,34 +59,36 @@ export const Modal = ({
     handleSubmit,
     modalType,
     currentFilterData,
-    whitelist,
     toggleFilteringModal,
     filters,
-    filtersCatalog,
 }: Props) => {
     const closeModal = () => {
         toggleFilteringModal();
     };
 
     let initialValues: Partial<FormValues> | undefined;
-    let selectedSources: Record<string, boolean> | undefined;
+
+    const catalogSourcesToIdMap: Record<string, string> = {};
+    Object.entries(filtersCatalog.filters).forEach(([filterId, filterData]) => {
+        catalogSourcesToIdMap[filterData.source] = filterId;
+    });
+
+    const { selectedFilterIds, selectedSources } = getSelectedValues(filters, catalogSourcesToIdMap);
+
     switch (modalType) {
         case MODAL_TYPE.EDIT_FILTERS:
             initialValues = currentFilterData as Partial<FormValues>;
             break;
+        case MODAL_TYPE.SELECT_MODAL_TYPE:
         case MODAL_TYPE.CHOOSE_FILTERING_LIST: {
-            const catalogSourcesToIdMap = getMap(Object.values(filtersCatalog.filters), 'source', 'id');
-
-            const selectedValues = getSelectedValues(filters, catalogSourcesToIdMap);
-            initialValues = selectedValues.selectedFilterIds as Partial<FormValues>;
-            selectedSources = selectedValues.selectedSources;
+            initialValues = selectedFilterIds as Partial<FormValues>;
             break;
         }
         default:
             break;
     }
 
-    const title = getTitle(modalType, whitelist) ? intl.getMessage(getTitle(modalType, whitelist)) : '';
+    const title = getTitle(modalType);
 
     return (
         <Dialog visible={isOpen} onClose={closeModal} title={title}>
@@ -116,7 +100,6 @@ export const Modal = ({
                 processingAddFilter={processingAddFilter}
                 processingConfigFilter={processingConfigFilter}
                 closeModal={closeModal}
-                whitelist={whitelist}
                 toggleFilteringModal={toggleFilteringModal}
             />
         </Dialog>

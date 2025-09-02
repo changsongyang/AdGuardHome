@@ -1,26 +1,19 @@
 import React from 'react';
 
 import intl from 'panel/common/intl';
-import { MODAL_TYPE } from 'panel/helpers/constants';
+import { MODAL_TYPE, TAB_TYPE } from 'panel/helpers/constants';
 import { Tabs } from 'panel/common/ui/Tabs';
+import { FiltersList } from './FiltersList';
 import { ManualFilterForm } from './ManualFilterForm';
-import { FilterListTab } from './FilterListTab';
 
-interface FormContentProps {
+type Props = {
     modalType: string;
-    whitelist?: boolean;
     selectedSources?: Record<string, boolean>;
     activeTab: string;
     onTabChange: (tabId: string) => void;
-}
+};
 
-export const FormContent: React.FC<FormContentProps> = ({
-    modalType,
-    whitelist,
-    selectedSources,
-    activeTab,
-    onTabChange,
-}) => {
+export const FormContent = ({ modalType, selectedSources, activeTab, onTabChange }: Props) => {
     if (modalType === MODAL_TYPE.SELECT_MODAL_TYPE) {
         return (
             <Tabs
@@ -28,14 +21,14 @@ export const FormContent: React.FC<FormContentProps> = ({
                 onTabChange={onTabChange}
                 tabs={[
                     {
-                        id: 'manual',
-                        label: intl.getMessage('add_custom_list'),
-                        content: <ManualFilterForm whitelist={whitelist} />,
+                        id: TAB_TYPE.LIST,
+                        label: intl.getMessage('blocklist_add_from_list'),
+                        content: <FiltersList selectedSources={selectedSources} />,
                     },
                     {
-                        id: 'list',
-                        label: intl.getMessage('choose_from_list'),
-                        content: <FilterListTab selectedSources={selectedSources} />,
+                        id: TAB_TYPE.MANUAL,
+                        label: intl.getMessage('blocklist_add_manual'),
+                        content: <ManualFilterForm />,
                     },
                 ]}
             />
@@ -43,8 +36,8 @@ export const FormContent: React.FC<FormContentProps> = ({
     }
 
     if (modalType === MODAL_TYPE.CHOOSE_FILTERING_LIST) {
-        return <FilterListTab selectedSources={selectedSources} />;
+        return <FiltersList selectedSources={selectedSources} />;
     }
 
-    return <ManualFilterForm whitelist={whitelist} />;
+    return <ManualFilterForm />;
 };

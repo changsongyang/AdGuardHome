@@ -831,6 +831,7 @@
     "blocklists_title": "Blocklists",
     "blocklists_desc": "Domains from these lists are blocked",
     "blocklists_add": "Add blocklist",
+    "blocklists_add_list": "Add blocklists",
     "blocklists_check_for_updates": "Check for updates",
     "blocklists_empty": "No blocklists yet — <a>add your first one</a>",
     "name_label": "Name",
@@ -869,5 +870,6 @@
     "blocklist_add_success": "Added blocklist: %name%",
     "blocklist_add_success_several": "Added blocklists: %name% and %value% more",
     "blocklist_remove_success": "Removed blocklist: %name%",
-    "changes_saved_success": "Changes saved"
+    "changes_saved_success": "Changes saved",
+    "blocklist_placeholder_example": "My blocklist"
 }

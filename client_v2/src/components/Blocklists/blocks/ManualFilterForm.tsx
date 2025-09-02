@@ -4,17 +4,14 @@ import { Controller, useFormContext } from 'react-hook-form';
 import intl from 'panel/common/intl';
 import { Input } from 'panel/common/controls/Input';
 import { validatePath, validateRequiredValue } from 'panel/helpers/validators';
+import theme from 'panel/lib/theme';
 
-interface ManualFilterFormProps {
-    whitelist?: boolean;
-}
-
-export const ManualFilterForm: React.FC<ManualFilterFormProps> = ({ whitelist }) => {
+export const ManualFilterForm = () => {
     const { control } = useFormContext();
 
     return (
-        <>
-            <div className="form__group">
+        <div className={theme.form.group}>
+            <div className={theme.form.input}>
                 <Controller
                     name="name"
                     control={control}
@@ -22,38 +19,34 @@ export const ManualFilterForm: React.FC<ManualFilterFormProps> = ({ whitelist })
                         <Input
                             {...field}
                             type="text"
-                            data-testid="filters_name"
-                            placeholder={intl.getMessage('enter_name_hint')}
+                            id="filters_name"
+                            label={intl.getMessage('name_label')}
+                            placeholder={intl.getMessage('blocklist_placeholder_example')}
                             errorMessage={fieldState.error?.message}
                         />
                     )}
                 />
             </div>
 
-            <div className="form__group">
+            <div className={theme.form.input}>
                 <Controller
                     name="url"
                     control={control}
-                    rules={{ 
-                        validate: { validateRequiredValue, validatePath } 
+                    rules={{
+                        validate: { validateRequiredValue, validatePath },
                     }}
                     render={({ field, fieldState }) => (
                         <Input
                             {...field}
                             type="text"
-                            data-testid="filters_url"
-                            placeholder={intl.getMessage('enter_url_or_path_hint')}
+                            id="filters_url"
+                            label={intl.getMessage('blocklist_url_file_path')}
+                            placeholder={intl.getMessage('blocklist_url_file_path')}
                             errorMessage={fieldState.error?.message}
                         />
                     )}
                 />
             </div>
-
-            <div className="form__description">
-                {whitelist
-                    ? intl.getMessage('enter_valid_allowlist')
-                    : intl.getMessage('enter_valid_blocklist')}
-            </div>
-        </>
+        </div>
     );
 };
