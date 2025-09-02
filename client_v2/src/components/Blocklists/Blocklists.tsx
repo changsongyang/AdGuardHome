@@ -21,6 +21,7 @@ import {
 import { Icon } from 'panel/common/ui/Icon';
 import { Modal } from './blocks/Modal';
 import { Table } from './blocks/Table';
+import { FilterUpdateModal } from './blocks/FilterUpdateModal';
 
 import s from './Blocklists.module.pcss';
 
@@ -29,6 +30,7 @@ export const Blocklists = () => {
     const { filtering } = useSelector((state: RootState) => state);
     const [openConfirmDelete, setOpenConfirmDelete] = useState(false);
     const [filterToDelete, setFilterToDelete] = useState<{ url: string; name: string }>({ url: '', name: '' });
+    const [openUpdateModal, setOpenUpdateModal] = useState(false);
 
     const {
         filters,
@@ -143,7 +145,7 @@ export const Blocklists = () => {
 
                 <button
                     type="button"
-                    onClick={handleRefresh}
+                    onClick={() => setOpenUpdateModal(true)}
                     disabled={processingRefreshFilters}
                     className={cn(s.button, s.button_settings)}>
                     <Icon icon="settings" color="green" />
@@ -195,6 +197,11 @@ export const Blocklists = () => {
                     buttonVariant="danger"
                 />
             )}
+
+            <FilterUpdateModal
+                isOpen={openUpdateModal}
+                onClose={() => setOpenUpdateModal(false)}
+            />
         </div>
     );
 };
