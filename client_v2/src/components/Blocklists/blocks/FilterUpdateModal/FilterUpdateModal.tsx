@@ -50,11 +50,10 @@ type FormValues = {
 };
 
 type Props = {
-    isOpen: boolean;
     onClose: () => void;
 };
 
-export const FilterUpdateModal = ({ isOpen, onClose }: Props) => {
+export const FilterUpdateModal = ({ onClose }: Props) => {
     const dispatch = useDispatch();
     const { filtering } = useSelector((state: RootState) => state);
     const { processingSetConfig, interval: currentInterval } = filtering;
@@ -83,7 +82,7 @@ export const FilterUpdateModal = ({ isOpen, onClose }: Props) => {
     };
 
     return (
-        <Dialog visible={isOpen} onClose={onClose} title={intl.getMessage('update_filters_title')}>
+        <Dialog visible onClose={onClose} title={intl.getMessage('update_filters_title')}>
             <form onSubmit={handleSubmit(onSubmit)}>
                 <div className={theme.dialog.description}>{intl.getMessage('update_filters_desc')}</div>
 

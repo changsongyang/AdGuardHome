@@ -198,7 +198,7 @@ export const Blocklists = () => {
                 />
             )}
 
-            <FilterUpdateModal isOpen={openUpdateModal} onClose={() => setOpenUpdateModal(false)} />
+            {openUpdateModal && <FilterUpdateModal onClose={() => setOpenUpdateModal(false)} />}
         </div>
     );
 };
