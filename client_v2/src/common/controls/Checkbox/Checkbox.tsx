@@ -1,4 +1,4 @@
-import React, { ComponentProps, MouseEvent, ReactNode } from 'react';
+import React, { ComponentProps, ForwardedRef, forwardRef, MouseEvent, ReactNode } from 'react';
 import cn from 'clsx';
 import theme from 'panel/lib/theme';
 import { Icon } from 'panel/common/ui/Icon';
@@ -14,7 +14,7 @@ type Props = ComponentProps<'input'> & {
     plusStyle?: boolean;
 };
 
-export const Checkbox = ({
+export const Checkbox = forwardRef<HTMLInputElement, Props>(({
     checked,
     children,
     className,
@@ -26,9 +26,10 @@ export const Checkbox = ({
     overflow,
     onClick,
     plusStyle,
-}: Props) => (
+}: Props, ref: ForwardedRef<HTMLInputElement>) => (
     <label htmlFor={id} className={cn(s.checkbox, { [s.disabled]: disabled }, className)} onClick={onClick}>
         <input
+            ref={ref}
             id={id}
             name={name}
             type="checkbox"
@@ -51,4 +52,6 @@ export const Checkbox = ({
             <div className={cn(s.label, { [theme.common.textOverflow]: overflow }, labelClassName)}>{children}</div>
         )}
     </label>
-);
+));
+
+Checkbox.displayName = 'Checkbox';

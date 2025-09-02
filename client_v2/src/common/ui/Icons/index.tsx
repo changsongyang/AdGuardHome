@@ -32,6 +32,7 @@ export const ICONS = {
     plus: 'plus',
     refresh: 'refresh',
     bullets: 'bullets',
+    link: 'link',
 } as const;
 
 export type IconType = keyof typeof ICONS;
@@ -465,6 +466,30 @@ export const Icons = memo(() => (
                 clipRule="evenodd"
                 d="M12 20C11.1716 20 10.5 19.3284 10.5 18.5C10.5 17.6716 11.1716 17 12 17C12.8284 17 13.5 17.6716 13.5 18.5C13.5 19.3284 12.8284 20 12 20Z"
                 fill="currentColor"
+            />
+        </symbol>
+
+        <symbol id="link" viewBox="0 0 24 24" fill="none">
+            <path
+                d="M18 11.8333V6.00001L12.2857 6.00001"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M17.9219 6.03911L11.1328 12.9696"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            />
+            <path
+                d="M8.76672 7H8C6.89543 7 6 7.89543 6 9V16C6 17.1046 6.89543 18 8 18H15C16.1046 18 17 17.1046 17 16V15.2961"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
             />
         </symbol>
     </svg>

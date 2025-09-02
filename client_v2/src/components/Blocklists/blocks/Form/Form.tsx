@@ -61,9 +61,19 @@ export const Form = ({
         closeModal();
     };
 
+    const handleFormSubmit = (values: FormValues) => {
+        onSubmit(values);
+    };
+
+    useEffect(() => {
+        return () => {
+            reset(defaultValues);
+        };
+    }, [reset]);
+
     return (
         <FormProvider {...methods}>
-            <form onSubmit={handleSubmit(onSubmit)}>
+            <form onSubmit={handleSubmit(handleFormSubmit)}>
                 <div className={theme.dialog.description}>{intl.getMessage('blocklist_add_desc')}</div>
 
                 <div>
@@ -80,7 +90,7 @@ export const Form = ({
                         type="submit"
                         id="filters_save"
                         variant="primary"
-                        size="medium"
+                        size="small"
                         disabled={processingAddFilter || processingConfigFilter}
                         className={theme.dialog.button}>
                         {intl.getMessage('save')}
@@ -90,7 +100,7 @@ export const Form = ({
                         type="button"
                         id="filters_cancel"
                         variant="secondary"
-                        size="medium"
+                        size="small"
                         onClick={handleCancel}
                         className={theme.dialog.button}>
                         {intl.getMessage('cancel')}
